@@ -1,0 +1,125 @@
+---
+title: "Border Crossing Entry Data Wrangling Visualization"
+author: "Harshitha"
+date: "1/12/2020"
+output: html_document
+---
+
+## Description
+
+- "Border Crossing Entry Data" Data set is taken from Kaggle.
+
+- The Bureau of Transportation Statistics (BTS) Border Crossing Data provide summary statistics for inbound crossings at the U.S.-Canada and the U.S.-Mexico border at the port level. Data are available for trucks, trains, containers, buses, personal vehicles, passengers, and pedestrians. Border crossing data are collected at ports of entry by U.S. Customs and Border Protection (CBP). The data reflect the number of vehicles, containers, passengers or pedestrians entering the United States.
+
+- Removed some rows from dataset as to make it less than 5 MB.
+
+- Below are the variables present in dataset:
+
+  - Port.Name : Name of CBP Port of Entry
+  - State : State
+  - Port.Code: CBP port code
+  - Border: US-Canada Border or US-Mexico Border
+  - Date: Year, Month
+  - Measure: Conveyances, containers, passengers, pedestrians
+  - Value: Count
+  - Location: Longitude and Latitude Location
+
+
+## Read CSV
+```{r}
+df <- read.csv(file="Assignment1-Shabad-Border Crossing Entry Data Wrangling Visualization.csv")
+head(df, 3)
+```
+## Data Wrangling
+
+### Untidy data
+
+Data present in the CSV is untidy:
+
+ 1) Each value must have its own cell, Location has Latitude and Longitude in a single cell which is violating this principle. Hence, value is separated into two columns. Now each cell has a single value.
+
+
+```{r message=FALSE, warning=FALSE}
+
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+
+
+newdf<- df %>%
+  separate(Location, into = c("point", "Location"), sep =7) %>%
+  separate(Location, into = c("Location", "Bracket"), sep = -1) %>%
+  separate(Location, into = c("Latitude", "Longitude"), sep =" ", convert = TRUE) %>%
+  select(-c(point, Bracket))
+
+head(newdf, 3)
+
+```
+
+2) Separated Date(year, Month, Date) and time to different columns,
+stored data into new dataframe newdf, as this data is used for analysis by plotting graphs.
+
+
+```{r message=FALSE, warning=FALSE}
+newdf <- newdf %>%
+  separate(Date, into = c("Date", "Time"), sep = " ") %>%
+  separate(Date, into = c("Month", "Date", "Year"), sep = "/", convert = TRUE)
+head(newdf, 3)
+
+```
+
+## Kable to format table
+
+```{r message=FALSE, warning=FALSE}
+library(kableExtra)
+library(knitr)
+newdf1 <- kable(newdf) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
+Data is tidy now, as latitude and longitude are separated into two columns, Date (Year, Month, Date) and time are present in different columns. All the data is converted to numeric as this separated numeric data is used for analyzing data by plotting graphs.
+
+## Visualization1
+
+- Value plotted Year wise for each state having different Measure, faceted with border
+
+- This gives information about No.of entries made into each state in the given years by each type of transportation(Measure), from two borders.
+
+- From below Graph we can say that out of all the years and all the states, California has highest inbound crossings from US-Mexico Border in the year 2018.
+
+
+``` {r message=FALSE, warning=FALSE}
+library(ggplot2)
+library(ggthemes)
+ggplot(data = newdf, mapping = aes(x = Year, y = Value,color=State)) +
+  geom_point()+
+  facet_wrap(~ Border, ncol = 2)+
+  theme_gdocs()+
+  scale_color_gdocs()
+```
+
+## Visualization2
+
+
+- Latitude and Longitude of ports, faceted with state
+
+- Plots Latitude and Longitude values of Different ports of different states. 
+
+- A state has many ports, each port has a different latitude and longitude value. Plotting different ports in each state gives us an understanding of where the port is present and what other port is near to it.
+
+- From below Graph we can say that Maine and New York inbound ports located very near to each other.
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = newdf, mapping = aes(x = Latitude, y = Longitude, color=State)) +
+  geom_point()+
+  facet_wrap(~ State, ncol = 5)+
+  theme_gdocs()+
+  scale_color_gdocs()
+```
+
+
+
+
+
+
